@@ -1,6 +1,8 @@
 A Git repository containing the simulations for the rocket trajectory involved 
 in the Cambridge University Spaceflight Society's 'Recovery Challenge'.
 
+Uses [Git LFS]("https://docs.github.com/en/free-pro-team@latest/github/managing-large-files/versioning-large-files") for the CAD models of the rocket and internals, so download and install it if you need to work with them.
+
 Simulations are named according to their author:
 
 | Name   | File name     | Dependencies | Comments                                                                                                                  |
