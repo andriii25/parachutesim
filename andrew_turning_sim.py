@@ -24,15 +24,14 @@ def drag_body(theta, v, h):
 
 
 def drag_fin(theta, v, h):
-    S = -1 #TODO: Get actual
-    drag_coeff = -1 #TODO: Get actual
-    # return drag(v, h, S, drag_coeff)
-    return 0
+    S = 0.03
+    drag_coeff = 2 * (np.sin(theta) ** 4) + 2 * (np.sin(theta) ** 3) * np.cos(theta)
+    return drag(v, h, S, drag_coeff)
 
 
 def angular_acceleration(ang, v, h):
-    mom_of_inertia = 1  #TODO: Get actual
-    parachute_arm = 0.5      #TODO: Get actual
+    mom_of_inertia = 4  #TODO: Get actual
+    parachute_arm = 0.95      #TODO: Get actual
     body_arm = 0.1         #TODO: Get actual
     fin_arm = 0.95           #TODO: Get actual
 
@@ -95,18 +94,18 @@ def turned_around(t, theta, v, h):
     return theta[1] - 2 * np.pi
 
 if __name__ == "__main__":
-    t_span = np.array([0, 5])
+    t_span = np.array([0, 3])
     times = np.linspace(t_span[0], t_span[1], 1001)
 
     #ThetaDot0, Theta0, theta measured as angle to the vertical
     y0 = [0, 0.1]
-    v = 600#TODO: Get actual
+    v = 1000#TODO: Get actual
     h = 50000#TODO: Get actual
 
     turned_around.terminal = True
     turned_around.direction = 1
 
-    soln = solve_ivp(f, t_span, y0, dense_output=True, args=[v, h], model = 'LSODA', events=turned_around, t_eval=times)
+    soln = solve_ivp(f, t_span, y0, dense_output=True, args=[v, h], model='LSODA', events=turned_around, t_eval=times)
 
     visualise(soln, v, h)
 
