@@ -4,6 +4,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 from andrew_sim import cd, mach
 
+def fin_drag_coeff(theta):
+    theta_norm_remainder = int(theta // (np.pi / 2))
+    theta_norm = theta % (np.pi / 2)
+    if theta_norm_remainder % 2 == 1:
+        # Is even?
+        theta_norm = np.pi / 2 - theta_norm
+    drag_coeff = 2 * (np.sin(theta_norm) ** 4) + 2 * (np.sin(theta_norm) ** 3) * np.cos(theta_norm)
+    return drag_coeff
+
 
 def drag(v, h, S, drag_coeff):
     density = ambiance.Atmosphere(h).density
@@ -25,27 +34,27 @@ def drag_body(theta, v, h):
 
 def drag_fin(theta, v, h):
     S = 0.03
-    theta_norm = theta % (np.pi / 2)
-    drag_coeff = 2 * (np.sin(theta_norm) ** 4) + 2 * (np.sin(theta_norm) ** 3) * np.cos(theta_norm)
+    drag_coeff = fin_drag_coeff(theta)
     return drag(v, h, S, drag_coeff)
 
 
-def angular_acceleration(ang, v, h):
+def angular_acceleration(ang, ang_vel, v, h):
     mom_of_inertia = 4
-    parachute_arm = 0.55
+    parachute_arm = 0.65
     body_arm = 0.1
     fin_arm = 0.95
 
-    ang_acc = np.sin(ang) / mom_of_inertia * (parachute_arm * drag_parachute(v, h) -
-                                              body_arm * drag_body(ang, v, h) -
-                                              fin_arm * drag_fin(ang, v, h))
+    ang_acc = 1 / mom_of_inertia * (np.sin(ang) * parachute_arm * drag_parachute(v, h) -
+                                    np.sin(ang) * body_arm * drag_body(ang, v, h) -
+                                    fin_arm * drag_fin(ang, v, h) +
+                                    (-1) * (ang_vel ** 2))
     return ang_acc
 
 def f(t, th, v, h):
     theta_dot = th[0]
     theta = th[1]
 
-    angular_acc = angular_acceleration(theta, v, h)
+    angular_acc = angular_acceleration(theta, theta_dot,  v, h)
     angular_vel = theta_dot
 
     return np.array([angular_acc, angular_vel])
@@ -58,7 +67,7 @@ def visualise(soln, v, h):
     t = soln.t
     ang_vel = soln.y[0]
     theta = soln.y[1]
-    ang_acc = [angular_acceleration(theta_curr, v, h) for theta_curr in theta]
+    ang_acc = [angular_acceleration(theta_curr, omega_curr, v, h) for theta_curr, omega_curr in zip(theta, ang_vel)]
     # drag = [drag_parachute(v, h, 0.2425) for v, h, in zip(v, x)]
 
     print(f'Max angular acceleration: {np.max(ang_acc)}')
@@ -90,6 +99,14 @@ def visualise(soln, v, h):
     #ax[4].legend()
 
     plt.show()
+def plot_drag_coeff_test():
+    angles = np.linspace(0, 2 * np.pi, 10001)
+
+
+    test = [(2 * (np.sin(x) ** 4) + 2 * (np.sin(x) ** 3) * np.cos(x)) for x in angles]
+    drag_coeff = [fin_drag_coeff(th) for th in angles]
+    plt.plot(angles, drag_coeff)
+    plt.show()
 
 def turned_around(t, theta, v, h):
     return theta[1] - 2 * np.pi
@@ -97,6 +114,8 @@ def turned_around(t, theta, v, h):
 if __name__ == "__main__":
     t_span = np.array([0, 20])
     times = np.linspace(t_span[0], t_span[1], 1001)
+
+    plot_drag_coeff_test()
 
     #ThetaDot0, Theta0, theta measured as angle to the vertical
     y0 = [0, 0.1]
@@ -106,7 +125,7 @@ if __name__ == "__main__":
     turned_around.terminal = False
     turned_around.direction = 1
 
-    soln = solve_ivp(f, t_span, y0, dense_output=True, args=[v, h], model='LSODA', events=turned_around, t_eval=times)
+    soln = solve_ivp(f, t_span, y0, dense_output=True, args=[v, h], method="LSODA", events=turned_around, t_eval=times)
 
     visualise(soln, v, h)
 
