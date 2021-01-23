@@ -20,7 +20,8 @@ def drag(v, h, S, drag_coeff):
 
 
 def drag_parachute(v, h):
-    S = 0.2425
+    #S = 0.2425
+    S = 1
     drag_coeff = cd(mach(v, h))
     return drag(v, h, S, drag_coeff)
 
@@ -40,14 +41,14 @@ def drag_fin(theta, v, h):
 
 def angular_acceleration(ang, ang_vel, v, h):
     mom_of_inertia = 4
-    parachute_arm = 0.65
+    parachute_arm = 0.95
     body_arm = 0.1
     fin_arm = 0.95
 
     ang_acc = 1 / mom_of_inertia * (np.sin(ang) * parachute_arm * drag_parachute(v, h) -
                                     np.sin(ang) * body_arm * drag_body(ang, v, h) -
                                     fin_arm * drag_fin(ang, v, h) +
-                                    (-1) * (ang_vel ** 2))
+                                    (-0.1) * (ang_vel ** 3))
     return ang_acc
 
 def f(t, th, v, h):
@@ -125,7 +126,7 @@ if __name__ == "__main__":
     turned_around.terminal = False
     turned_around.direction = 1
 
-    soln = solve_ivp(f, t_span, y0, dense_output=True, args=[v, h], method="LSODA", events=turned_around, t_eval=times)
+    soln = solve_ivp(f, t_span, y0, dense_output=True, args=[v, h], method="Radau", events=turned_around, t_eval=times)
 
     visualise(soln, v, h)
 
