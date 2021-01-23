@@ -11,29 +11,30 @@ def drag(v, h, S, drag_coeff):
 
 
 def drag_parachute(v, h):
-    S = 0.2425 # TODO: Check?
+    S = 0.2425
     drag_coeff = cd(mach(v, h))
     return drag(v, h, S, drag_coeff)
 
 
 def drag_body(theta, v, h):
-    S = 9.5e-3 * np.cos(theta) #TODO: Get actual
-    drag_coeff = -1    #TODO: Get actual
+    S = 9.5e-3 * np.cos(theta)
+    drag_coeff = -1
     # return drag(v, h, S, drag_coeff)
     return 0
 
 
 def drag_fin(theta, v, h):
     S = 0.03
-    drag_coeff = 2 * (np.sin(theta) ** 4) + 2 * (np.sin(theta) ** 3) * np.cos(theta)
+    theta_norm = theta % (np.pi / 2)
+    drag_coeff = 2 * (np.sin(theta_norm) ** 4) + 2 * (np.sin(theta_norm) ** 3) * np.cos(theta_norm)
     return drag(v, h, S, drag_coeff)
 
 
 def angular_acceleration(ang, v, h):
-    mom_of_inertia = 4  #TODO: Get actual
-    parachute_arm = 0.95      #TODO: Get actual
-    body_arm = 0.1         #TODO: Get actual
-    fin_arm = 0.95           #TODO: Get actual
+    mom_of_inertia = 4
+    parachute_arm = 0.55
+    body_arm = 0.1
+    fin_arm = 0.95
 
     ang_acc = np.sin(ang) / mom_of_inertia * (parachute_arm * drag_parachute(v, h) -
                                               body_arm * drag_body(ang, v, h) -
@@ -94,7 +95,7 @@ def turned_around(t, theta, v, h):
     return theta[1] - 2 * np.pi
 
 if __name__ == "__main__":
-    t_span = np.array([0, 3])
+    t_span = np.array([0, 20])
     times = np.linspace(t_span[0], t_span[1], 1001)
 
     #ThetaDot0, Theta0, theta measured as angle to the vertical
@@ -102,7 +103,7 @@ if __name__ == "__main__":
     v = 1000#TODO: Get actual
     h = 50000#TODO: Get actual
 
-    turned_around.terminal = True
+    turned_around.terminal = False
     turned_around.direction = 1
 
     soln = solve_ivp(f, t_span, y0, dense_output=True, args=[v, h], model='LSODA', events=turned_around, t_eval=times)
