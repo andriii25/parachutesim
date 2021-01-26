@@ -1,8 +1,10 @@
+from matplotlib.ticker import FuncFormatter, MultipleLocator
 from scipy.integrate import solve_ivp
 import ambiance
 import matplotlib.pyplot as plt
 import numpy as np
 from andrew_sim import cd, mach
+from plotting.piticks import pi_axis_formatter
 
 def fin_drag_coeff(theta):
     theta_norm_remainder = int(theta // (np.pi / 2))
@@ -45,10 +47,11 @@ def angular_acceleration(ang, ang_vel, v, h):
     body_arm = 0.1
     fin_arm = 0.95
 
-    ang_acc = 1 / mom_of_inertia * (np.sin(ang) * parachute_arm * drag_parachute(v, h) -
-                                    np.sin(ang) * body_arm * drag_body(ang, v, h) -
-                                    fin_arm * drag_fin(ang, v, h) +
-                                    (-0.1) * (ang_vel ** 3))
+    ang_acc = 1 / mom_of_inertia * (np.sin(ang) * parachute_arm * 13.1719 + # drag_parachute(v, h) -
+                                    #0 * np.sin(ang) * body_arm * drag_body(ang, v, h) -
+                                    #0 * fin_arm * drag_fin(ang, v, h) +
+                                    (-0.5) * (ang_vel ** 3) )
+
     return ang_acc
 
 def f(t, th, v, h):
@@ -65,6 +68,11 @@ def visualise(soln, v, h):
     """Plots all the data from the solution"""
     # Generally if you want to add an other plot make a function for it like drag() or acc()
     # And recalculate from the solution, look at the examples for drag
+
+    # Set fonts
+    plt.rcParams.update({'font.size': 18})
+
+
     t = soln.t
     ang_vel = soln.y[0]
     theta = soln.y[1]
@@ -77,20 +85,27 @@ def visualise(soln, v, h):
     #print(f'Max parachute drag: {np.max(drag)}')
     #print(f'Velocity at end: {v[-1]} m/s')
 
-    fig, ax = plt.subplots(3, 1, figsize=(18, 18), sharex="col")
+    fig, ax = plt.subplots(1, 1, figsize=(18, 6), sharex="col")
 
-    ax[0].plot(t, abs(ang_vel), 'b-', label="Angular velocity")
-    ax[0].set_ylabel('omega (1/s)')
-    ax[0].legend()
+    ticklen = np.pi/4
+    ax.set_title("Angle of the rocket against the vertical over time")
+    ax.plot(t, theta, 'g-', label="Angle")
+    ax.set_ylabel('$\Theta$  (radians)')
+    ax.set_ylim(top=1.7*np.pi)
+    ax.set_xlabel('time $(s)$')
+    ax.yaxis.set_major_formatter(FuncFormatter(pi_axis_formatter))
+    ax.yaxis.set_major_locator(MultipleLocator(base=ticklen))
+    ax.margins(0)
+    ax.legend()
 
-    ax[1].plot(t, theta, 'g-', label="Angle")
-    ax[1].set_ylabel('theta $(1)$')
-    ax[1].set_xlabel('time $(s)$')
-    ax[1].legend()
-
-    ax[2].plot(t, ang_acc, 'r-', label="Angular acceleration")
-    ax[2].set_ylabel('alpha $(1/s^2)$')
-    ax[2].legend()
+    # ax[1].plot(t, abs(ang_vel), 'b-', label="Angular velocity")
+    # ax[1].set_ylabel('$\dot{\Theta}\quad(\frac{1}{s})$')
+    # ax[1].legend()
+#
+#
+#     ax[2].plot(t, ang_acc, 'r-', label="Angular acceleration")
+#     ax[2].set_ylabel('$\ddot{\Theta}\quad(\frac{1}{s^2})$')
+#    ax[2].legend()
     #ax[3].plot(t, drag, 'r-', label="Parachute drag")
     #ax[3].set_ylabel('Parachute drag (N)')
     #ax[3].legend()
